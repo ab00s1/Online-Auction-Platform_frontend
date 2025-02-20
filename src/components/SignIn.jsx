@@ -43,7 +43,7 @@ function SignIn({ setUser }) {
   return (
     <div className="signin-form">
       <div className="signin-form-img">
-        <img src="/src/assets/2780906.jpg" alt="signin-page" />
+        <img src="/2780906.jpg" alt="signin-page" />
       </div>
       <Form onSubmit={handleSubmit}>
         <Form.Group as={Row} className="mb-3" controlId="formHorizontalEmail">

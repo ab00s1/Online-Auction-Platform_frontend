@@ -7,7 +7,7 @@ function Home() {
     <>
       <Card>
         <div className="img-con">
-          <Card.Img variant="top" src="/src/assets/29710.jpg" />
+          <Card.Img variant="top" src="/29710.jpg" />
         </div>
         <Card.Body>
           <Card.Text>

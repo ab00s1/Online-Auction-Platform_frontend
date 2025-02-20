@@ -103,7 +103,7 @@ function Dashboard() {
               ) : (
                 <div className="empty-handle">
                   <img
-                    src="/src/assets/hand_12640222.jpeg"
+                    src="/hand_12640222.jpeg"
                     alt="Select one from the list"
                   />
                 </div>

@@ -66,7 +66,7 @@ function SignUp({ setUser }) {
   return (
     <div className="signup-form">
       <div className="signup-form-img">
-        <img src="/src/assets/19199299.jpg" alt="signup-page" />
+        <img src="/19199299.jpg" alt="signup-page" />
       </div>
       <Form noValidate validated={validated} onSubmit={handleSubmit}>
         <Row className="mb-3">
