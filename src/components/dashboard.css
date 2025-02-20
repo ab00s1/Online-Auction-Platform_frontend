@@ -1,0 +1,45 @@
+.row {
+    margin-inline: auto;
+    row-gap: 5vh;
+}
+
+h2.dashboard {
+    text-align: center;
+    text-decoration: underline;
+    color: rgb(255, 35, 90);
+    margin-block: 2rem;
+}
+
+.col-sm-8 {
+    padding: 1rem;
+    background-color: rgba(193, 193, 193, 0.5);
+    border-radius: 2rem;
+    width: 60%;
+    margin-inline: auto;
+}
+
+@media (max-width: 560px) {
+    .col-sm-8 {
+        width: 90%;
+    }
+}
+
+.empty-handle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100%;
+}
+
+.empty-handle img {
+    width: 25%;
+}
+
+.pagination {
+    width: 50%;
+    margin-inline: auto;
+    margin-top: 0.5rem;
+    display: flex;
+    justify-content: center;
+    column-gap: 0.25rem;
+}

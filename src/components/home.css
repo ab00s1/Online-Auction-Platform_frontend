@@ -1,0 +1,33 @@
+.img-con {
+    width: 50%;
+    margin-inline: auto;
+}
+
+/* For tablets and smaller screens */
+@media (max-width: 1024px) {
+    .img-con {
+        width: 70%;
+    }
+}
+
+/* For mobile devices */
+@media (max-width: 768px) {
+    .img-con {
+        width: 90%;
+    }
+}
+
+/* For very small screens (like older phones) */
+@media (max-width: 480px) {
+    .img-con {
+        width: 100%;
+    }
+}
+
+.card-text{
+    text-align: center;
+}
+
+.card-text h2 {
+    margin-bottom: 2.5rem;
+}
