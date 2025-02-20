@@ -24,8 +24,8 @@ This is the **frontend** part of a full-stack online auction platform built usin
 ### 1. Clone the Repository
 
 ```bash
-git clone <repository-url>
-cd online-auction-frontend
+git clone https://github.com/ab00s1/Online-Auction-Platform_frontend.git
+cd Online-Auction-Platform_frontend
 npm install
 npm run dev
 ```
