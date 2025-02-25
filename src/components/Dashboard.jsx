@@ -44,11 +44,47 @@ function Dashboard() {
       <Pagination.Item
         key={number}
         active={number === currentPage}
-        onClick={() => setCurrentPage(number)}
+        onClick={() => {
+          setCurrentPage(number);
+          setIsClicked(false);
+        }}
       >
         {number}
       </Pagination.Item>
     );
+  }
+
+  function handleBid(itemID, currentBid) {
+    const user = localStorage.getItem("current");
+
+    const bidAmount = parseFloat(
+      prompt(`Current bid is ₹${currentBid}. Enter your bid:`)
+    );
+
+    if (isNaN(bidAmount)) {
+      alert("Please enter a valid number.");
+      return;
+    }
+
+    if (bidAmount <= currentBid) {
+      alert("Your bid must be higher than the current bid.");
+      return;
+    }
+
+    setItems((prevItems) => {
+      const updatedItems = prevItems.map((item) => {
+        if (item.id === itemID) {
+          return {
+            ...item,
+            currentBid: bidAmount,
+            highestBidder: user,
+          };
+        }
+        return item;
+      });
+      localStorage.setItem("itemList", JSON.stringify(updatedItems));
+      return updatedItems;
+    });
   }
 
   return (
@@ -98,6 +134,28 @@ function Dashboard() {
                     <p>
                       Highest Bidder: <strong>{obj.highestBidder}</strong>
                     </p>
+                    {!obj.isClosed ? (
+                      <Button
+                        onClick={() => handleBid(obj.id, obj.currentBid)}
+                        className="bidmore"
+                      >
+                        Bid More
+                      </Button>
+                    ) : (
+                      <>
+                        <Button
+                          style={{ cursor: "not-allowed" }}
+                          className="bidmore"
+                        >
+                          Bid More
+                        </Button>
+                        <em
+                          style={{ color: "yellowgreen", fontWeight: "bold" }}
+                        >
+                          ! Bidding is Closed !
+                        </em>
+                      </>
+                    )}
                   </Tab.Pane>
                 ))
               ) : (

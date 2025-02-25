@@ -42,7 +42,8 @@ function PostAuction() {
       itemName : itemName,
       description : description,
       currentBid : currentBid,
-      highestBidder : highestBidder
+      highestBidder : highestBidder,
+      isClosed : false
     };
 
     setItems((prevItems) => {

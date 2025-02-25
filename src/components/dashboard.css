@@ -43,3 +43,8 @@ h2.dashboard {
     justify-content: center;
     column-gap: 0.25rem;
 }
+
+.bidmore {
+    display: block;
+    margin-inline: auto;
+}
