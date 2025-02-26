@@ -15,53 +15,46 @@ function SignUp({ setUser }) {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordMatch, setPasswordMatch] = useState(true);
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (event) => {
-    const form = event.currentTarget;
-    if (form.checkValidity() === false || password !== confirmPassword) {
-      event.preventDefault();
-      event.stopPropagation();
-      setPasswordMatch(password === confirmPassword);
-      setValidated(true);
+  async function handleSubmit(event) {
+    event.preventDefault();
+    setValidated(true);
+
+    const form = new FormData(event.target);
+    const firstName = form.get("firstName");
+    const lastName = form.get("lastName");
+    const fullName = `${firstName} ${lastName}`;
+    const email = form.get("email");
+    const city = form.get("city");
+    const state = form.get("state");
+    const zip = form.get("zip");
+    const pass = form.get("password");
+
+    if (pass !== confirmPassword) {
+      setPasswordMatch(false);
       return;
     }
 
-    const thisForm = new FormData(event.target);
+    try {
+      setLoading(true);
+      const response = await fetch("http://localhost:5001/SignUp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ fullName, email, city, state, zip, pass }),
+      });
 
-    const firstName = thisForm.get("firstName");
-    const lastName = thisForm.get("lastName");
-    const fullName = firstName + " " + lastName;
-    const email = thisForm.get("email");
-    const city = thisForm.get("city");
-    const state = thisForm.get("state");
-    const zip = thisForm.get("zip");
-    const pass = thisForm.get("password");
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message);
 
-    const userObj = {
-      fullName: fullName,
-      email: email,
-      city: city,
-      state: state,
-      zip: zip,
-      pass: pass,
-    };
-
-    const userList = JSON.parse(localStorage.getItem("user")) || [];
-
-    if (userList.find((user) => user.email === email)) {
-      alert("This email is already in use.");
-      setValidated(false);
-    } else {
-      userList.push(userObj);
-
-      localStorage.setItem("user", JSON.stringify(userList));
-
-      setUser(userObj);
-      localStorage.setItem("current", userObj.fullName);
-      nav("/dashboard");
-      setValidated(true);
+      alert("Registration successful! Please sign in.");
+      nav("/signIn");
+    } catch (error) {
+      alert(error.message);
+    } finally {
+      setLoading(false);
     }
-  };
+  }
 
   return (
     <div className="signup-form">
@@ -183,7 +176,7 @@ function SignUp({ setUser }) {
             feedbackType="invalid"
           />
         </Form.Group>
-        <Button type="submit">Sign up !</Button>
+        <Button type="submit" disabled={loading}>{loading ? "Signing up..." : "Sign up !"}</Button>
       </Form>
     </div>
   );

@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import initialItems from "/src/itemList.js";
 import "./dashboard.css";
 import { Link, useNavigate } from "react-router-dom";
 import Col from "react-bootstrap/Col";
@@ -24,14 +23,22 @@ function Dashboard() {
       return;
     }
 
-    const storedItems = localStorage.getItem("itemList");
-    if (storedItems) {
-      setItems(JSON.parse(storedItems));
-    } else {
-      setItems(initialItems);
-      localStorage.setItem("itemList", JSON.stringify(initialItems));
-    }
-  }, []);
+    const fetchItems = async () => {
+      try {
+        const response = await fetch("http://localhost:5001/");
+        if (!response.ok) throw new Error("Failed to fetch items");
+
+        const data = await response.json();
+        setItems(data);
+      } catch (error) {
+        console.error("Error fetching items:", error);
+      }
+    };
+
+    fetchItems();
+    const interval = setInterval(fetchItems, 1000); // Refresh every 1s
+    return () => clearInterval(interval);
+  }, [nav]);
 
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
@@ -54,7 +61,7 @@ function Dashboard() {
     );
   }
 
-  function handleBid(itemID, currentBid) {
+  const handleBid = async (itemID, currentBid) => {
     const user = localStorage.getItem("current");
 
     const bidAmount = parseFloat(
@@ -71,21 +78,55 @@ function Dashboard() {
       return;
     }
 
-    setItems((prevItems) => {
-      const updatedItems = prevItems.map((item) => {
-        if (item.id === itemID) {
-          return {
-            ...item,
-            currentBid: bidAmount,
-            highestBidder: user,
-          };
-        }
-        return item;
+    try {
+      // Send bid update to MongoDB
+      const response = await fetch("http://localhost:5001/update-bid", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          itemID,
+          bidAmount,
+          highestBidder: JSON.parse(user).fullName,
+        }),
       });
-      localStorage.setItem("itemList", JSON.stringify(updatedItems));
-      return updatedItems;
-    });
-  }
+
+      if (!response.ok) {
+        throw new Error("Failed to update bid");
+      }
+
+      const updatedItem = await response.json();
+
+      setItems((prevItems) =>
+        prevItems.map((item) =>
+          item._id === itemID
+            ? {
+                ...item,
+                currentBid: bidAmount,
+                highestBidder: user,
+              }
+            : item
+        )
+      );
+    } catch (error) {
+      console.error("Error updating bid:", error);
+      alert("Failed to place bid. Try again.");
+    }
+
+    
+  };
+
+  const formatTimeRemaining = (endingTime) => {
+    const timeLeft = new Date(endingTime).getTime() - Date.now();
+    if (timeLeft <= 0) return "Bidding Closed";
+    
+
+    const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+
+    return `Time Left: ${days}d ${hours}h ${minutes}m ${seconds}s`;
+  };
 
   return (
     <>
@@ -107,10 +148,10 @@ function Dashboard() {
             <ListGroup>
               {currentItems.map((obj) => (
                 <ListGroup.Item
-                  key={obj.id}
+                  key={obj._id}
                   onClick={() => setIsClicked(true)}
                   action
-                  href={`#${obj.id}`}
+                  href={`#${obj._id}`}
                 >
                   {obj.itemName}
                 </ListGroup.Item>
@@ -124,7 +165,7 @@ function Dashboard() {
             <Tab.Content style={{ height: "100%" }}>
               {isClicked ? (
                 currentItems.map((obj) => (
-                  <Tab.Pane key={obj.id} eventKey={`#${obj.id}`}>
+                  <Tab.Pane key={obj._id} eventKey={`#${obj._id}`}>
                     <p>
                       Description: <strong>{obj.description}</strong>
                     </p>
@@ -136,26 +177,26 @@ function Dashboard() {
                     </p>
                     {!obj.isClosed ? (
                       <Button
-                        onClick={() => handleBid(obj.id, obj.currentBid)}
+                        onClick={() => handleBid(obj._id, obj.currentBid)}
                         className="bidmore"
                       >
                         Bid More
                       </Button>
                     ) : (
-                      <>
-                        <Button
-                          style={{ cursor: "not-allowed" }}
-                          className="bidmore"
-                        >
-                          Bid More
-                        </Button>
-                        <em
-                          style={{ color: "yellowgreen", fontWeight: "bold" }}
-                        >
-                          ! Bidding is Closed !
-                        </em>
-                      </>
+                      <Button
+                        style={{ cursor: "not-allowed" }}
+                        className="bidmore"
+                      >
+                        Bid More
+                      </Button>
                     )}
+                    <p>
+                      <strong style={{ color: "orange" }}>
+                        {obj.isClosed
+                          ? "Bidding Closed"
+                          : formatTimeRemaining(obj.endingTime)}
+                      </strong>
+                    </p>
                   </Tab.Pane>
                 ))
               ) : (

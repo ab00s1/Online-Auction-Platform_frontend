@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import initialItems from "/src/itemList.js";
 import "./postAuction.css";
 import { useNavigate } from "react-router-dom";
 import Form from "react-bootstrap/Form";
@@ -9,6 +8,8 @@ import Button from "react-bootstrap/Button";
 function PostAuction() {
   const nav = useNavigate();
   const [items, setItems] = useState([]);
+  const [newId, setNewId] = useState(1);
+  const [endingTime, setEndingTime] = useState("");
 
   useEffect(() => {
     const user = localStorage.getItem("current");
@@ -17,42 +18,57 @@ function PostAuction() {
       return;
     }
 
-    const storedItems = localStorage.getItem("itemList");
-    if (storedItems) {
-      setItems(JSON.parse(storedItems));
-    } else {
-      setItems(initialItems);
-      localStorage.setItem("itemList", JSON.stringify(initialItems));
-    }
-  }, []);
+    fetch("http://localhost:5001/")
+      .then((res) => res.json())
+      .then((data) => {
+        setItems(data);
+        console.log(data);
+        const highestId =
+          data.length > 0 ? Math.max(...data.map((item) => item._id)) : 0;
+        setNewId(highestId + 1); // Assign next available ID
+      })
+      .catch((err) => console.error("Error fetching items:", err));
+  }, [nav]);
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
 
     const form = new FormData(event.target);
 
-    const id = Number(form.get("id"));
+    const _id = Number(form.get("id"));
     const itemName = form.get("itemName");
     const description = form.get("description");
     const currentBid = Number(form.get("currentBid"));
     const highestBidder = form.get("highestBidder");
 
     const itemObj = {
-      id : id,
-      itemName : itemName,
-      description : description,
-      currentBid : currentBid,
-      highestBidder : highestBidder,
-      isClosed : false
+      _id: newId,
+      itemName,
+      description,
+      currentBid,
+      highestBidder,
+      endingTime,
+      isClosed: false,
     };
 
-    setItems((prevItems) => {
-      const updatedItems = [...prevItems, itemObj];
-      localStorage.setItem("itemList", JSON.stringify(updatedItems));
-      return updatedItems;
-    });
+    try {
+      const response = await fetch("http://localhost:5001/post-item", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(itemObj),
+      });
 
-    nav("/dashboard");
+      if (!response.ok) {
+        throw new Error("Failed to add item");
+      }
+
+      const data = await response.json();
+      console.log("Item added:", data);
+
+      nav("/dashboard");
+    } catch (error) {
+      console.error("Error posting item:", error);
+    }
   }
 
   return (
@@ -71,7 +87,7 @@ function PostAuction() {
         </InputGroup>
 
         <InputGroup className="mb-3">
-        <InputGroup.Text id="basic-addon2">Name</InputGroup.Text>
+          <InputGroup.Text id="basic-addon2">Name</InputGroup.Text>
           <Form.Control
             placeholder="Write the name of item"
             name="itemName"
@@ -83,7 +99,12 @@ function PostAuction() {
 
         <InputGroup className="mb-3">
           <InputGroup.Text>Current bid (in ₹)</InputGroup.Text>
-          <Form.Control name="currentBid" type="number" required aria-label="Amount (in the Indian rupee)" />
+          <Form.Control
+            name="currentBid"
+            type="number"
+            required
+            aria-label="Amount (in the Indian rupee)"
+          />
           <InputGroup.Text>.00</InputGroup.Text>
         </InputGroup>
 
@@ -92,13 +113,34 @@ function PostAuction() {
           <InputGroup.Text id="basic-addon3">
             Name of the highest bidder
           </InputGroup.Text>
-          <Form.Control id="highest-bid" name="highestBidder" required aria-describedby="basic-addon3" />
+          <Form.Control
+            id="highest-bid"
+            name="highestBidder"
+            required
+            aria-describedby="basic-addon3"
+          />
         </InputGroup>
 
-        <InputGroup>
+        <InputGroup className="mb-3">
           <InputGroup.Text>Item Description</InputGroup.Text>
-          <Form.Control as="textarea" name="description" required aria-label="With textarea" />
+          <Form.Control
+            as="textarea"
+            name="description"
+            required
+            aria-label="With textarea"
+          />
         </InputGroup>
+
+        <InputGroup className="mb-3">
+          <InputGroup.Text>Auction Ends At</InputGroup.Text>
+          <Form.Control
+            type="datetime-local"
+            name="endingTime"
+            required
+            onChange={(e) => setEndingTime(e.target.value)}
+          />
+        </InputGroup>
+
         <Button type="submit" variant="success">
           Post
         </Button>

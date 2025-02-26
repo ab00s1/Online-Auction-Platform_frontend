@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import "./signIn.css";
 import Button from "react-bootstrap/Button";
 import Col from "react-bootstrap/Col";
@@ -8,36 +8,37 @@ import { useNavigate } from "react-router-dom";
 
 function SignIn({ setUser }) {
   const nav = useNavigate();
+  const [loading, setLoading] = useState(false);
 
-  function handleSubmit(event) {
+  async function handleSubmit(event) {
     event.preventDefault();
+    setLoading(true);
 
     const form = new FormData(event.target);
 
     const email = form.get("email");
     const password = form.get("password");
 
-    if (!localStorage.getItem("user")) {
-      alert("Create an account");
-      nav("/signUp");
-      return;
-    }
+    try {
+      const response = await fetch("http://localhost:5001/SignIn", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, pass: password }),
+      });
 
-    const detailsList = JSON.parse(localStorage.getItem("user"));
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message);
 
-    const user = detailsList.find(
-      (details) => details.email === email && details.pass === password
-    );
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("current", JSON.stringify(data.user));
 
-    if (user) {
-      localStorage.setItem("current", user.fullName);
-      setUser(user);
+      setUser(data.user);
       nav("/dashboard");
-    } else {
-      alert("Wrong email or password.");
+    } catch (error) {
+      alert(error.message);
+    } finally {
+      setLoading(false);
     }
-
-    // console.log("User signed in:", { email, password });
   }
 
   return (
@@ -85,7 +86,9 @@ function SignIn({ setUser }) {
 
         <Form.Group as={Row} className="mb-3">
           <Col sm={{ span: 10, offset: 2 }}>
-            <Button type="submit">Sign in</Button>
+            <Button type="submit" disabled={loading}>
+              {loading ? "Signing in..." : "Sign in"}
+            </Button>
           </Col>
         </Form.Group>
       </Form>
