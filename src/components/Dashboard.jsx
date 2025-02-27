@@ -16,6 +16,9 @@ function Dashboard() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
+  const searchParams = new URLSearchParams(location.search);
+  const searchQuery = searchParams.get("search") || "";
+
   useEffect(() => {
     const user = localStorage.getItem("current");
     if (!user) {
@@ -29,7 +32,11 @@ function Dashboard() {
         if (!response.ok) throw new Error("Failed to fetch items");
 
         const data = await response.json();
-        setItems(data);
+        const filteredItems = data.filter((item) =>
+          item.itemName.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+
+        setItems(filteredItems);
       } catch (error) {
         console.error("Error fetching items:", error);
       }
@@ -38,7 +45,7 @@ function Dashboard() {
     fetchItems();
     const interval = setInterval(fetchItems, 1000); // Refresh every 1s
     return () => clearInterval(interval);
-  }, [nav]);
+  }, [nav, searchQuery]);
 
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
@@ -111,21 +118,47 @@ function Dashboard() {
       console.error("Error updating bid:", error);
       alert("Failed to place bid. Try again.");
     }
-
-    
   };
 
   const formatTimeRemaining = (endingTime) => {
     const timeLeft = new Date(endingTime).getTime() - Date.now();
     if (timeLeft <= 0) return "Bidding Closed";
-    
 
     const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
-    const hours = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const hours = Math.floor(
+      (timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
+    );
     const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
     const seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
 
     return `Time Left: ${days}d ${hours}h ${minutes}m ${seconds}s`;
+  };
+
+  const handleDelete = async (itemID) => {
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this item?"
+    );
+    if (!confirmDelete) return;
+
+    try {
+      const response = await fetch(
+        `http://localhost:5001/delete-item/${itemID}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to delete item");
+      }
+
+      setItems((prevItems) => prevItems.filter((item) => item._id !== itemID));
+      setIsClicked(false);
+      alert("Item deleted successfully");
+    } catch (error) {
+      console.error("Error deleting item:", error);
+      alert("Failed to delete item. Try again.");
+    }
   };
 
   return (
@@ -197,6 +230,33 @@ function Dashboard() {
                           : formatTimeRemaining(obj.endingTime)}
                       </strong>
                     </p>
+                    <div className="edit-delete">
+                      {JSON.parse(localStorage.getItem("current")).fullName ===
+                      obj.creator ? (
+                        <>
+                          <Button
+                            variant="primary"
+                            onClick={() => {
+                              localStorage.setItem("editItemID", obj._id);
+                              nav("/edit");
+                            }}
+                          >
+                            Edit
+                          </Button>
+
+                          <Button
+                            variant="danger"
+                            onClick={() => handleDelete(obj._id)}
+                          >
+                            Delete
+                          </Button>
+                        </>
+                      ) : (
+                        <p style={{ color: "gray", fontStyle: "italic" }}>
+                          You can edit or delete only your bid.
+                        </p>
+                      )}
+                    </div>
                   </Tab.Pane>
                 ))
               ) : (

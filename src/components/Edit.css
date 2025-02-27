@@ -1,0 +1,13 @@
+h2.edit {
+    margin-block: 2rem;
+    text-align: center;
+    color: rgba(0, 0, 255, 0.655);
+    text-decoration: underline;
+}
+
+.edit-form button {
+    display: block;
+    margin-inline: auto;
+    margin-block: 1rem;
+    padding-inline: 1rem;
+}

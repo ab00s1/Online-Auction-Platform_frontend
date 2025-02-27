@@ -48,3 +48,12 @@ h2.dashboard {
     display: block;
     margin-inline: auto;
 }
+
+.edit-delete {
+    float: right;
+    margin-right: 1rem;
+}
+
+.edit-delete button {
+    margin-right: 1rem;
+}

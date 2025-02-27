@@ -5,12 +5,10 @@ import Form from "react-bootstrap/Form";
 import InputGroup from "react-bootstrap/InputGroup";
 import Button from "react-bootstrap/Button";
 
-function PostAuction() {
+function Edit() {
   const nav = useNavigate();
-  const [items, setItems] = useState([]);
-  const [newId, setNewId] = useState(1);
+  const [itemDetails, setItemDetails] = useState({});
   const [endingTime, setEndingTime] = useState("");
-  const [creator, setCreator] = useState("");
 
   useEffect(() => {
     const user = localStorage.getItem("current");
@@ -18,73 +16,69 @@ function PostAuction() {
       nav("/signIn");
       return;
     }
-
-    const userObj = JSON.parse(user);
-    setCreator(userObj.fullName);
-
-    fetch("http://localhost:5001/")
+  
+    const itemID = localStorage.getItem("editItemID"); // Get item ID from localStorage
+    if (!itemID) {
+      alert("No item selected for editing.");
+      nav("/dashboard");
+      return;
+    }
+  
+    fetch(`http://localhost:5001/item/${itemID}`)
       .then((res) => res.json())
       .then((data) => {
-        setItems(data);
-        console.log(data);
-        const highestId =
-          data.length > 0 ? Math.max(...data.map((item) => item._id)) : 0;
-        setNewId(highestId + 1); // Assign next available ID
+        setItemDetails(data);
+        setEndingTime(new Date(data.endingTime).toISOString());
       })
-      .catch((err) => console.error("Error fetching items:", err));
-  }, [nav]);
+      .catch((err) => console.error("Error fetching item:", err));
+  }, [nav]);  
 
-  async function handleSubmit(event) {
+  async function handleEdit(event) {
     event.preventDefault();
-
+  
     const form = new FormData(event.target);
-
-    const _id = Number(form.get("id"));
+  
     const itemName = form.get("itemName");
     const description = form.get("description");
     const currentBid = Number(form.get("currentBid"));
     const highestBidder = form.get("highestBidder");
-
-    const itemObj = {
-      _id: newId,
+  
+    const updatedItem = {
       itemName,
       description,
       currentBid,
       highestBidder,
       endingTime,
       isClosed: false,
-      creator,
     };
-
+  
     try {
-      const response = await fetch("http://localhost:5001/post-item", {
-        method: "POST",
+      const response = await fetch(`http://localhost:5001/edit-item/${itemDetails._id}`, {
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(itemObj),
+        body: JSON.stringify(updatedItem),
       });
-
+  
       if (!response.ok) {
-        throw new Error("Failed to add item");
+        throw new Error("Failed to update item");
       }
-
-      const data = await response.json();
-      console.log("Item added:", data);
-
+  
+      alert("Item updated successfully");
       nav("/dashboard");
     } catch (error) {
-      console.error("Error posting item:", error);
+      console.error("Error updating item:", error);
     }
-  }
+  }  
 
   return (
     <>
-      <h2 className="post">Post a new item</h2>
-      <Form onSubmit={handleSubmit} className="post-form">
+      <h2 className="edit">Edit the item</h2>
+      <Form onSubmit={handleEdit} className="edit-form">
         <InputGroup className="mb-3">
           <InputGroup.Text id="basic-addon1">ID</InputGroup.Text>
           <Form.Control
             name="id"
-            value={items.length + 1}
+            value={localStorage.getItem("editItemID")}
             readOnly
             aria-label="ID"
             aria-describedby="basic-addon1"
@@ -146,21 +140,10 @@ function PostAuction() {
           />
         </InputGroup>
 
-        <InputGroup className="mb-3">
-          <InputGroup.Text>Creator</InputGroup.Text>
-          <Form.Control
-            name="creator"
-            value={creator}
-            readOnly
-          />
-        </InputGroup>
-
-        <Button type="submit" variant="success">
-          Post
-        </Button>
+        <Button type="submit" variant="primary">Update</Button>
       </Form>
     </>
   );
 }
 
-export default PostAuction;
+export default Edit;

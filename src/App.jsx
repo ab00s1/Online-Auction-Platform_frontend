@@ -12,12 +12,14 @@ import PostAuction from "./components/PostAuction";
 import SignIn from "./components/SignIn";
 import SignUp from "./components/SignUp";
 import { useState } from "react";
+import Edit from "./components/Edit";
 
 function App() {
   const nav = useNavigate();
   const year = new Date().getFullYear();
 
-  const [user,setUser] = useState(localStorage.getItem("current"));
+  const [user, setUser] = useState(localStorage.getItem("current"));
+  const [query, setQuery] = useState("");
 
   function navigate(event) {
     const user = localStorage.getItem("current");
@@ -28,9 +30,16 @@ function App() {
 
   function logout() {
     localStorage.setItem("current", "");
-    setUser("")
+    setUser("");
     nav("/");
   }
+
+  const handleSearch = (e) => {
+    e.preventDefault();
+    if (query.trim()) {
+      nav(`/dashboard?search=${encodeURIComponent(query)}`);
+    }
+  };
 
   return (
     <>
@@ -77,14 +86,19 @@ function App() {
                 )}
               </NavDropdown>
             </Nav>
-            <Form className="d-flex">
+            <Form onSubmit={handleSearch} className="d-flex">
               <Form.Control
                 type="search"
                 placeholder="Search"
                 className="me-2"
                 aria-label="Search"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                required
               />
-              <Button variant="outline-success">Search</Button>
+              <Button type="submit" variant="outline-success">
+                Search
+              </Button>
             </Form>
           </Navbar.Collapse>
         </Container>
@@ -96,6 +110,7 @@ function App() {
         <Route path="/postAuction" element={<PostAuction />} />
         <Route path="/signIn" element={<SignIn setUser={setUser} />} />
         <Route path="/signUp" element={<SignUp setUser={setUser} />} />
+        <Route path="/edit" element={<Edit />} />
       </Routes>
 
       <footer>
