@@ -28,7 +28,7 @@ function Dashboard() {
 
     const fetchItems = async () => {
       try {
-        const response = await fetch("http://localhost:5001/");
+        const response = await fetch("https://online-auction-platform-backend.onrender.com/");
         if (!response.ok) throw new Error("Failed to fetch items");
 
         const data = await response.json();
@@ -87,7 +87,7 @@ function Dashboard() {
 
     try {
       // Send bid update to MongoDB
-      const response = await fetch("http://localhost:5001/update-bid", {
+      const response = await fetch("https://online-auction-platform-backend.onrender.com/update-bid", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -141,17 +141,28 @@ function Dashboard() {
     if (!confirmDelete) return;
 
     try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        alert("Unauthorized. Please log in.");
+        return;
+      }
+  
       const response = await fetch(
-        `http://localhost:5001/delete-item/${itemID}`,
+        `https://online-auction-platform-backend.onrender.com/delete-item/${itemID}`,
         {
           method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
+          },
         }
       );
-
+  
       if (!response.ok) {
-        throw new Error("Failed to delete item");
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to delete item");
       }
-
+  
       setItems((prevItems) => prevItems.filter((item) => item._id !== itemID));
       setIsClicked(false);
       alert("Item deleted successfully");

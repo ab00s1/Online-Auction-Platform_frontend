@@ -16,33 +16,39 @@ function Edit() {
       nav("/signIn");
       return;
     }
-  
-    const itemID = localStorage.getItem("editItemID"); // Get item ID from localStorage
+
+    const itemID = localStorage.getItem("editItemID");
     if (!itemID) {
       alert("No item selected for editing.");
       nav("/dashboard");
       return;
     }
-  
-    fetch(`http://localhost:5001/item/${itemID}`)
+
+    fetch(`https://online-auction-platform-backend.onrender.com/item/${itemID}`)
       .then((res) => res.json())
       .then((data) => {
         setItemDetails(data);
         setEndingTime(new Date(data.endingTime).toISOString());
       })
       .catch((err) => console.error("Error fetching item:", err));
-  }, [nav]);  
+  }, [nav]);
 
   async function handleEdit(event) {
     event.preventDefault();
-  
+
     const form = new FormData(event.target);
-  
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      alert("Unauthorized. Please log in.");
+      return;
+    }
+
     const itemName = form.get("itemName");
     const description = form.get("description");
     const currentBid = Number(form.get("currentBid"));
     const highestBidder = form.get("highestBidder");
-  
+
     const updatedItem = {
       itemName,
       description,
@@ -51,24 +57,31 @@ function Edit() {
       endingTime,
       isClosed: false,
     };
-  
+
     try {
-      const response = await fetch(`http://localhost:5001/edit-item/${itemDetails._id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updatedItem),
-      });
-  
+      const response = await fetch(
+        `https://online-auction-platform-backend.onrender.com/edit-item/${itemDetails._id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(updatedItem),
+        }
+      );
+
       if (!response.ok) {
-        throw new Error("Failed to update item");
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to update item");
       }
-  
+
       alert("Item updated successfully");
       nav("/dashboard");
     } catch (error) {
       console.error("Error updating item:", error);
     }
-  }  
+  }
 
   return (
     <>
@@ -140,7 +153,9 @@ function Edit() {
           />
         </InputGroup>
 
-        <Button type="submit" variant="primary">Update</Button>
+        <Button type="submit" variant="primary">
+          Update
+        </Button>
       </Form>
     </>
   );
